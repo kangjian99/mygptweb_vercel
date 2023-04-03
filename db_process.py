@@ -1,23 +1,26 @@
-import pymongo
+import pyodbc
 import json
 import tiktoken
 from settings import *
-
-client = pymongo.MongoClient(f'mongodb+srv://{db_username}:{db_password}@cluster0.l690fke.mongodb.net/?retryWrites=true&w=majority')
     
 def authenticate_user(username, password):
-    # 连接到 MongoDB 数据库，并检查 user_info 集合中是否存在提供的用户名和密码
-    db = client['database']
-    user_info = db['user_info']
-    count = user_info.count_documents({'user_id': username, 'password': password})
+    # 连接到 Azure SQL 数据库，并检查 user_info 表格中是否存在提供的用户名和密码
+    cnxn = pyodbc.connect(f'DRIVER={driver};SERVER={server};DATABASE={database};UID={db_username};PWD={db_password}')
+    cursor = cnxn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM user_info WHERE user_id = ? AND password = ?", (username, password))
+    count = cursor.fetchone()[0]
 
     # 关闭数据库连接
-    client.close()
+    cursor.close()
+    cnxn.close()
 
     # 如果找到匹配的用户名和密码，则返回 True，否则返回 False
     return count == 1
 
 def insert_db(result, user_id=None, messages=[]):
+    # 连接到数据库
+    cnxn = pyodbc.connect(f'DRIVER={driver};SERVER={server};PORT=1433;DATABASE={database};UID={db_username};PWD={db_password}')
+    
     # 获取要插入的结果数据
     now = result.get('datetime')
     user_id = result.get('user_id')
@@ -25,47 +28,44 @@ def insert_db(result, user_id=None, messages=[]):
     en_char_count = result.get('en_char_count')
     tokens = result.get('tokens')
     
-    # 插入数据
-    db = client['database']
-    collection = db['stats']
-    collection.insert_one({
-        'user_id': user_id,
-        'datetime': now,
-        'cn_char_count': cn_char_count,
-        'en_char_count': en_char_count,
-        'tokens': tokens
-    })
+    # 构建插入语句并执行
+    query = "INSERT INTO stats (user_id, datetime, cn_char_count, en_char_count, tokens) VALUES (?, ?, ?, ?, ?);"
+    params = (user_id, now, cn_char_count, en_char_count, tokens)
+    cursor = cnxn.cursor()
+    cursor.execute(query, params)
     
     if user_id:
         messages_str = json.dumps(messages, ensure_ascii=False)
-        collection = db['session']
-        collection.update_one({'user_id': user_id}, {'$set': {'messages': messages_str}}, upsert=True)
-
+        # 构建插入语句并执行
+        query = "INSERT INTO session (user_id, messages) VALUES (?, ?);"
+        params = (user_id, messages_str)
+        cursor = cnxn.cursor()
+        cursor.execute(query, params)
+        
+    cnxn.commit()
+    cnxn.close()
+    
 def clear_messages(user_id):
-    # 删除数据
-    db = client['database']
-    collection = db['session_messages']
-    collection.delete_one({'user_id': user_id})
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    with open(f'{directory}/messages_{user_id}.txt', 'w') as file:
+        file.truncate(0)
         
 def save_user_messages(user_id, messages):
-    # 更新数据
-    messages_str = json.dumps(messages, ensure_ascii=False)
-    db = client['database']
-    collection = db['session_messages']
-    collection.update_one({'user_id': user_id}, {'$set': {'messages': messages_str}}, upsert=True)
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    with open(f'{directory}/messages_{user_id}.txt', 'w') as f:
+        for message in messages:
+            f.write(json.dumps(message) + '\n')
             
 def get_user_messages(user_id):
-    # 查询数据
-    db = client['database']
-    collection = db['session_messages']
-    row = collection.find_one({'user_id': user_id})
-    
-    if row is None:
-        messages = []
-    else:
-        messages_str = row['messages']
-        messages = json.loads(messages_str)
-        
+    messages = []
+    try:
+        with open(f'{directory}/messages_{user_id}.txt', 'r') as f:
+            for line in f.readlines():
+                messages.append(json.loads(line.strip()))
+    except FileNotFoundError:
+        pass
     return messages
 
 def history_messages(user_id):
