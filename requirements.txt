@@ -2,5 +2,5 @@ flask
 Openai
 Markdown
 datetime
-Pyodbc
+pymongo
 tiktoken
