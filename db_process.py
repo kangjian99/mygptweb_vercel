@@ -36,7 +36,7 @@ def insert_db(result, user_id=None, messages=[]):
     if user_id:
         messages_str = json.dumps(messages, ensure_ascii=False)
         collection = db['session']
-        collection.insert_one({'user_id': user_id, 'messages': [messages_str]})
+        collection.insert_one({'user_id': user_id, 'messages': messages_str})
 
 def clear_messages(user_id):
     # 删除数据
