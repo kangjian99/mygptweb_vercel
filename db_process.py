@@ -11,9 +11,6 @@ def authenticate_user(username, password):
     user_info = db['user_info']
     count = user_info.count_documents({'user_id': username, 'password': password})
 
-    # 关闭数据库连接
-    client.close()
-
     # 如果找到匹配的用户名和密码，则返回 True，否则返回 False
     return count == 1
 
