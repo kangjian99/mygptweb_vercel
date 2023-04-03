@@ -36,7 +36,7 @@ def insert_db(result, user_id=None, messages=[]):
     if user_id:
         messages_str = json.dumps(messages, ensure_ascii=False)
         collection = db['session']
-        collection.update_one({'user_id': user_id}, {'$push': {'messages': messages_str}}, upsert=True)
+        collection.insert_one({'user_id': user_id, 'messages': [messages_str]})
 
 def clear_messages(user_id):
     # 删除数据
@@ -49,7 +49,7 @@ def save_user_messages(user_id, messages):
     messages_str = json.dumps(messages, ensure_ascii=False)
     db = client['database']
     collection = db['session_messages']
-    collection.update_one({'user_id': user_id}, {'$push': {'messages': messages_str}}, upsert=True)
+    collection.update_one({'user_id': user_id}, {'$set': {'messages': messages_str}}, upsert=True)
             
 def get_user_messages(user_id):
     # 查询数据
