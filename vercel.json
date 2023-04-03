@@ -2,4 +2,13 @@
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/app" }
   ]
+  "build": {
+    "env": {
+      "LD_LIBRARY_PATH": "/usr/local/lib"
+    },
+    "hooks": {
+      "prebuild": "curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list > /etc/apt/sources.list.d/mssql-release.list && apt-get update && ACCEPT_EULA=Y apt-get install -y msodbcsql18 unixodbc-dev && apt-get clean && rm -rf /var/lib/apt/lists/*",
+      "postinstall": "ln -s /usr/lib/x86_64-linux-gnu/libodbc.so.2 /usr/local/lib/libodbc.so.2"
+    }
+  }
 }
