@@ -1,0 +1,6 @@
+flask
+Openai
+Markdown
+datetime
+Pyodbc
+tiktoken
