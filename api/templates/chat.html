@@ -38,15 +38,10 @@ User: {{ user_id}}<br>
                 <div class="card-body">
                     {% if message %} {{ message }} {% endif %}
                     <form method="post" id="question-form" onsubmit="submit.disabled=true" enctype="multipart/form-data">
-                            <div class="form-group">
+                        <div class="form-group">
                             <label for="question">提示语句或关键词（多个关键词以空格分开）：</label>
-                            <textarea id="question" name="question" placeholder="Type your keywords here." rows="1" class="form-control"></textarea>
+                            <textarea id="question" name="question" placeholder="Type your keywords here." rows="4" class="form-control"></textarea>
                         </div>
-                         <div class="form-group">
-                            <label for="context">背景信息：</label>
-                            <textarea id="context" name="context" placeholder="" rows="4" class="form-control"></textarea>
-                        </div>
-                        
 <div class="form-group">
   <div class="row">
     <div class="col-5">
@@ -129,7 +124,6 @@ User: {{ user_id}}<br>
 function resetPage() {
     // 清空 question 文本区域
     document.getElementById("question").value = "";
-    document.getElementById("context").value = "";
     // 清空 words 文本区域
     document.getElementById("words").value = "";
 }
@@ -178,7 +172,6 @@ let source;
 document.getElementById("question-form").addEventListener("submit", function(event) {
     event.preventDefault();
     var question = document.getElementById("question").value;
-    var context = document.getElementById("context").value;
     var temperature = document.getElementById("tem").value;
     var words = document.getElementById("words").value;
     var dropdown = document.getElementById("dropdown").value;
@@ -186,7 +179,6 @@ document.getElementById("question-form").addEventListener("submit", function(eve
 
     var formData = new FormData();
     formData.append("question", question);
-    formData.append("context", context);
     formData.append("temperature", temperature);
     formData.append("words", words);
     formData.append("dropdown", dropdown);
