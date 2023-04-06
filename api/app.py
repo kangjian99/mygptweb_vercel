@@ -168,7 +168,7 @@ def stream():
 
     user_id = session.get('user_id')
     keyword = request.form['question']
-    context = request.form['context']
+    # context = request.form['context']
     session['messages']  = get_user_messages(user_id)
     if session['messages'] == []:
         words = int(request.form['words']) if request.form['words'] != '' else 500
@@ -178,7 +178,7 @@ def stream():
             prompt_template = list(prompts.values())[int(dropdown) - 1]
         else:
             prompt_template = template_file.read().decode('utf-8')
-        question = f"{prompt_template.format(keyword=keyword, words=words, context=context)!s}"
+        question = f"{prompt_template.format(keyword=keyword, words=words)!s}"
     else:
         question = keyword
 
